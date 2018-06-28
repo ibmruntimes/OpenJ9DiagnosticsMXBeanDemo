@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: hello-mxbean-vol
+  namespace: javaruntime
+  labels:
+    app: hello-mxbean-vol
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: hello-mxbean-vol-deploy
+        app: hello-mxbean-vol-delpoy
+        version: v1
+    spec:
+      volumes:
+        - name: cloudant-repo-pv
+          nfs:
+            server: <IP Addr of NFS Server>
+            path: <NFS server path to store the dumps>
+            readOnly: false
+      containers:
+        - name: hello-mxbean-vol
+          image: "index.docker.io/chandra25ms/helloworld-openjdk8-openj9-mxbean"
+          ports:
+            - containerPort: 9443
+          volumeMounts:
+            - name: cloudant-repo-pv
+              mountPath: "/var/log"
+      imagePullSecrets:
+        - name: myregistrykey
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-mxbean-vol-service
+  namespace: javaruntime
+  labels:
+    app: hello-mxbean-vol
+spec:
+  type: NodePort
+  ports:
+    - port: 9443
+      nodePort: 32337
+      targetPort: 9443
+      name: http
+  selector:
+    name: hello-mxbean-vol-deploy
+
